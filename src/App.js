@@ -1,7 +1,7 @@
 import logo from "./logo.png";
 import { fabric } from "./fabricUtil";
 import "./App.css";
-import { Component } from "react";
+import { Component, createRef } from "react";
 import json from "./data.json";
 import {
   blockPrefix,
@@ -16,7 +16,10 @@ import {
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      json,
+    };
+    this.canvas = createRef();
   }
 
   componentDidMount() {
@@ -36,6 +39,7 @@ class App extends Component {
       me.canvas = new fabric.Canvas("canvas", {
         height: img1.height,
         width: img1.width,
+        renderOnAddRemove: true,
       });
       me.canvas.setBackgroundImage(img1, me.canvas.renderAll.bind(me.canvas));
 
@@ -88,17 +92,37 @@ class App extends Component {
         });
         me.canvas.add(rect);
       }
+      me.canvas.renderAll();
+      me.canvas.calcOffset();
       me.canvas.on({
-        "object:modified": me.onScaling,
-        "object:scaling": me.onScaling,
+        "object:scaled": me.onScaling,
       });
     });
   }
 
-  onScaling = (options) => {
-    // const me = this;
-    options.target.setCoords();
-    console.log(options.target.getScaledWidth(), options.target.width);
+  onScaling = ({ target, transform }) => {
+    // console.log(options.target.getScaledWidth(), options.target.width);
+    if (target.name.indexOf(blockPrefix) >= 0) {
+      const { shouldReset, widthToExpand, leftposition } =
+        this.canvas.getObjectsInBlock(target.getBoundingRect(), target.name);
+      if (widthToExpand) {
+        target.set({
+          width: widthToExpand,
+          left: leftposition,
+          scaleX: 1,
+          scaleY: 1,
+        });
+      }
+      if (shouldReset) {
+        target.set({
+          width: target.width,
+          left: transform.original.left,
+          scaleX: 1,
+          scaleY: 1,
+        });
+      }
+    }
+    target.setCoords();
   };
 
   mergeSelection = () => {};
@@ -146,7 +170,10 @@ class App extends Component {
   };
 
   delete = () => {
-    for (let item of this.canvas.getActiveObjects()) this.canvas.remove(item);
+    const activeObj = this.canvas.getActiveObjects();
+    if (activeObj.length === 1) this.canvas.remove(activeObj[0]);
+    // for (let item of this.canvas.getActiveObjects()) this.canvas.remove(item);
+    else this.canvas.removeMultiple(this.canvas.getActiveObjects());
   };
 
   render() {
@@ -154,8 +181,22 @@ class App extends Component {
       <>
         <button onClick={this.getJson}>JSON</button>
         <button onClick={this.delete}>Delete</button>
+        <button
+          onClick={() => {
+            this.canvas.undo();
+          }}
+        >
+          undo
+        </button>
+        <button
+          onClick={() => {
+            this.canvas.redo();
+          }}
+        >
+          redo
+        </button>
         <div className="App">
-          <canvas id="canvas"></canvas>
+          <canvas id="canvas" ref={this.canvas}></canvas>
         </div>
       </>
     );

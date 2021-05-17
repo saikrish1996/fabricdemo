@@ -10,13 +10,15 @@ const fill = "transparent",
   lockScalingY = true,
   lockMovementX = true,
   lockMovementY = true,
-  strokeUniform = true;
+  strokeUniform = true,
+  blockPadding = 10,
+  blockStrokeWidth = 5;
 
 const blockConfig = {
     fill,
-    strokeWidth: 5,
+    strokeWidth: blockStrokeWidth,
     stroke: blockStroke,
-    padding: 10,
+    padding: blockPadding,
     strokeUniform,
     lockScalingY,
     lockMovementX,
@@ -52,4 +54,6 @@ export {
   blockConfig,
   sheleveConfig,
   columnConfig,
+  blockPadding,
+  blockStrokeWidth,
 };
